@@ -1,7 +1,9 @@
 package com.griddynamics.urlshortener.controller;
 
 import com.griddynamics.urlshortener.domain.UrlMapping;
+import com.griddynamics.urlshortener.dto.ShortenUrlResponse;
 import com.griddynamics.urlshortener.service.UrlService;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.http.HttpStatus;
@@ -19,16 +21,14 @@ public class UrlController {
     }
 
     @PostMapping("/api/urls")
-    public UrlMapping shortenUrl(@RequestBody UrlRequest request) {
+    public ShortenUrlResponse shortenUrl(@RequestBody UrlRequest request) {
         String url = request.url();
 
-        // Check if URL is empty
         if (url == null || url.isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "URL is required");
         }
 
-        // Validate URL format
         try {
             URI uri = URI.create(url);
 
@@ -43,7 +43,12 @@ public class UrlController {
                     HttpStatus.BAD_REQUEST, "Invalid URL");
         }
 
-        return urlService.shortenUrl(url);
+        UrlMapping mapping = urlService.shortenUrl(url);
+
+        return new ShortenUrlResponse(
+                mapping.getOriginalUrl(),
+                mapping.getShortCode()
+        );
     }
 
     @GetMapping("/{shortCode}")
