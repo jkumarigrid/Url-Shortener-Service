@@ -56,4 +56,33 @@ class UrlControllerTest {
                 .andExpect(header().string(
                         "Location", "https://www.google.com"));
     }
+
+    @Test
+    void shouldReturnBadRequestForInvalidUrl() throws Exception {
+        mockMvc.perform(post("/api/urls")
+                        .contentType("application/json")
+                        .content("""
+                                {"url":"not-a-url"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestForEmptyUrl() throws Exception {
+        mockMvc.perform(post("/api/urls")
+                        .contentType("application/json")
+                        .content("""
+                                {"url":""}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnNotFoundForUnknownShortCode() throws Exception {
+        when(urlService.getOriginalUrl("unknown123"))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/unknown123"))
+                .andExpect(status().isNotFound());
+    }
 }
