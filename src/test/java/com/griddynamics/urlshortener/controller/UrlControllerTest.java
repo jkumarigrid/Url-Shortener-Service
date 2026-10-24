@@ -40,7 +40,8 @@ class UrlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.originalUrl")
                         .value("https://www.google.com"))
-                .andExpect(jsonPath("$.shortCode").value("abc12345"));
+                .andExpect(jsonPath("$.shortCode").value("abc12345"))
+                .andExpect(jsonPath("$.id").doesNotExist());
     }
 
     @Test
