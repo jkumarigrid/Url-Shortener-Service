@@ -4,6 +4,10 @@ import com.griddynamics.urlshortener.domain.UrlMapping;
 import com.griddynamics.urlshortener.service.UrlService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.net.URI;
 
 @RestController
 public class UrlController {
@@ -16,13 +20,37 @@ public class UrlController {
 
     @PostMapping("/api/urls")
     public UrlMapping shortenUrl(@RequestBody UrlRequest request) {
-        return urlService.shortenUrl(request.url());
+        String url = request.url();
+
+        // Check if URL is empty
+        if (url == null || url.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "URL is required");
+        }
+
+        // Validate URL format
+        try {
+            URI uri = URI.create(url);
+
+            if (uri.getHost() == null ||
+                    !("http".equals(uri.getScheme())
+                            || "https".equals(uri.getScheme()))) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Invalid URL");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Invalid URL");
+        }
+
+        return urlService.shortenUrl(url);
     }
 
     @GetMapping("/{shortCode}")
     public RedirectView redirect(@PathVariable String shortCode) {
         UrlMapping mapping = urlService.getOriginalUrl(shortCode)
-                .orElseThrow(() -> new RuntimeException("Short URL not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Short URL not found"));
 
         return new RedirectView(mapping.getOriginalUrl());
     }
