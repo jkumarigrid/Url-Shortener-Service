@@ -17,14 +17,18 @@ public class UrlService {
     }
 
     public UrlMapping shortenUrl(String originalUrl) {
+        Optional<UrlMapping> existingMapping =
+                urlRepository.findByOriginalUrl(originalUrl);
+    
+        if (existingMapping.isPresent()) {
+            return existingMapping.get();
+        }
+    
         String shortCode;
-
         do {
-            shortCode = UUID.randomUUID()
-                    .toString()
-                    .substring(0, 8);
+            shortCode = UUID.randomUUID().toString().substring(0, 8);
         } while (urlRepository.findByShortCode(shortCode).isPresent());
-
+    
         UrlMapping mapping = new UrlMapping(originalUrl, shortCode);
         return urlRepository.save(mapping);
     }
